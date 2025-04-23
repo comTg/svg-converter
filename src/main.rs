@@ -1,10 +1,8 @@
 use std::path::PathBuf;
-use std::fs::File;
-use std::io::BufWriter;
 
 use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
-use image::{DynamicImage, ImageFormat};
+use image;
 use imageproc::edges::canny;
 use resvg::usvg::{self, TreeParsing};
 use resvg::tiny_skia;
@@ -35,7 +33,7 @@ enum Commands {
         width: Option<u32>,
 
         /// 输出图像的高度
-        #[arg(short, long)]
+        #[arg(short = 'H', long)]
         height: Option<u32>,
     },
     /// 将PNG转换为SVG
@@ -86,7 +84,7 @@ fn svg_to_png(
     let tree = usvg::Tree::from_str(&svg_data, &opt)?;
     
     // 获取尺寸
-    let orig_size = tree.root.view_box.rect.size();
+    let orig_size = tree.view_box.rect.size();
     
     // 确定输出尺寸
     let (width_final, height_final) = match (width, height) {
