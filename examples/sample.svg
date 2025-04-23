@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <rect x="0" y="0" width="200" height="200" fill="#f0f0f0" />
+  
+  <!-- 圆形 -->
+  <circle cx="100" cy="100" r="50" fill="#3498db" stroke="#2980b9" stroke-width="2" />
+  
+  <!-- 矩形 -->
+  <rect x="30" y="30" width="50" height="50" fill="#e74c3c" stroke="#c0392b" stroke-width="2" rx="5" ry="5" />
+  
+  <!-- 星形 -->
+  <polygon points="160,40 171,74 205,74 178,95 189,129 160,109 131,129 142,95 115,74 149,74" 
+          fill="#f1c40f" stroke="#f39c12" stroke-width="2" />
+  
+  <!-- 文本 -->
+  <text x="100" y="170" font-family="Arial" font-size="12" text-anchor="middle" fill="#2c3e50">SVG测试</text>
+</svg> 
