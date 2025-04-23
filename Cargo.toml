@@ -16,3 +16,4 @@ clap = { version = "4.3.0", features = ["derive"] }
 anyhow = "1.0.71"
 svgtypes = "0.11.0"
 roxmltree = "0.18.0"
+kurbo = "0.11.1"

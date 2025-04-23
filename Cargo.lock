@@ -438,6 +438,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "kurbo"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "89234b2cc610a7dd927ebde6b41dd1a5d4214cffaef4cf1fb2195d592f92518f"
+dependencies = [
+ "arrayvec",
+ "smallvec",
+]
+
+[[package]]
 name = "lebe"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -884,6 +894,7 @@ dependencies = [
  "clap",
  "image",
  "imageproc",
+ "kurbo 0.11.1",
  "resvg",
  "roxmltree 0.18.1",
  "svg",
@@ -898,7 +909,7 @@ version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed4b0611e7f3277f68c0fa18e385d9e2d26923691379690039548f867cef02a7"
 dependencies = [
- "kurbo",
+ "kurbo 0.9.5",
  "siphasher",
 ]
 
@@ -1055,7 +1066,7 @@ dependencies = [
  "data-url",
  "flate2",
  "imagesize",
- "kurbo",
+ "kurbo 0.9.5",
  "log",
  "roxmltree 0.18.1",
  "simplecss",
@@ -1071,7 +1082,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "035044604e89652c0a2959b8b356946997a52649ba6cade45928c2842376feb4"
 dependencies = [
  "fontdb",
- "kurbo",
+ "kurbo 0.9.5",
  "log",
  "rustybuzz",
  "unicode-bidi",
