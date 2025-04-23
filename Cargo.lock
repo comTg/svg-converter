@@ -885,7 +885,9 @@ dependencies = [
  "image",
  "imageproc",
  "resvg",
+ "roxmltree 0.18.1",
  "svg",
+ "svgtypes",
  "tiny-skia",
  "usvg",
 ]

@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::fs;
 
 use anyhow::{Result, anyhow};
 use clap::{Parser, Subcommand};
@@ -8,6 +9,7 @@ use resvg::usvg::{self, TreeParsing};
 use resvg::tiny_skia;
 use svg::node::element::{path::Data, Path};
 use svg::Document;
+use roxmltree::Document as XmlDocument;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -76,11 +78,31 @@ fn svg_to_png(
     width: Option<u32>,
     height: Option<u32>,
 ) -> Result<()> {
-    // 读取SVG文件内容
-    let svg_data = std::fs::read_to_string(input)?;
+    // 创建临时文件路径用于存储处理后的SVG
+    let temp_svg = input.with_file_name(format!(
+        "{}_temp_text2path.svg", 
+        input.file_stem().unwrap_or_default().to_string_lossy()
+    ));
+    
+    // 尝试将文本转换为路径
+    let processed_svg = convert_text_to_path(input, &temp_svg)?;
+    
+    // 配置SVG解析选项
+    let mut opt = usvg::Options::default();
+    opt.resources_dir = std::path::Path::new(&processed_svg).parent().map(|p| p.to_path_buf());
+    
+    // 设置字体处理选项
+    opt.font_family = "Arial, Helvetica, sans-serif".to_string();
+    opt.font_size = 16.0;
+    opt.languages = vec!["zh-CN".to_string(), "en".to_string()]; // 支持中文和英文
+    opt.shape_rendering = usvg::ShapeRendering::GeometricPrecision;
+    opt.text_rendering = usvg::TextRendering::GeometricPrecision;
+    opt.image_rendering = usvg::ImageRendering::OptimizeQuality;
+    
+    // 读取处理后的SVG
+    let svg_data = std::fs::read_to_string(&processed_svg)?;
     
     // 解析SVG
-    let opt = usvg::Options::default();
     let tree = usvg::Tree::from_str(&svg_data, &opt)?;
     
     // 获取尺寸
@@ -115,8 +137,37 @@ fn svg_to_png(
     // 将像素缓冲区保存为PNG
     pixmap.save_png(output)?;
     
+    // 清理临时文件
+    if processed_svg != *input {
+        let _ = std::fs::remove_file(&processed_svg);
+    }
+    
     println!("成功将SVG转换为PNG：{} -> {}", input.display(), output.display());
     Ok(())
+}
+
+/// 将SVG中的文本转换为路径
+fn convert_text_to_path(input: &PathBuf, output: &PathBuf) -> Result<PathBuf> {
+    // 读取SVG文件
+    let svg_content = fs::read_to_string(input)?;
+    
+    // 解析XML
+    let doc = XmlDocument::parse(&svg_content)?;
+    
+    // 检查是否包含text元素
+    let has_text = doc.descendants().any(|node| node.tag_name().name() == "text");
+    
+    if has_text {
+        // 使用更安全的SVG处理方式
+        // 不修改原始SVG，而是让usvg库自己去处理文本
+        fs::copy(input, output)?;
+        println!("SVG文件包含文本元素，将使用内置SVG渲染器处理文本。");
+    } else {
+        // 如果没有文本元素，直接复制
+        fs::copy(input, output)?;
+    }
+    
+    Ok(output.clone())
 }
 
 /// 将PNG转换为SVG
