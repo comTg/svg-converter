@@ -24,22 +24,20 @@ struct Args {
 enum Commands {
     /// 将SVG转换为PNG
     SvgToPng {
-        /// 输入SVG文件
+        #[clap(help = "Input svg file path")]
         input: String,
-        /// 输出PNG文件
+        #[clap(help = "Output png file path", name = "OUTPUT")]
         output: String,
-        /// 图像宽度
-        #[arg(short, long, default_value_t = 800)]
+        #[clap(help = "Output width (optional, defaults to SVG's original width)", default_value = "0")]
         width: u32,
-        /// 图像高度
-        #[arg(short, long, default_value_t = 600)]
+        #[clap(help = "Output height (optional, defaults to SVG's original height)", default_value = "0")]
         height: u32,
     },
     /// 将PNG转换为SVG
     PngToSvg {
         #[clap(help = "Input png file path")]
         input: String,
-        #[clap(help = "Output svg file path")]
+        #[clap(help = "Output svg file path", name = "OUTPUT")]
         output: String,
         #[clap(help = "Simplification level (0-10, where 0 is no simplification, 10 is max)", default_value = "3")]
         simplify: u8,
@@ -92,19 +90,15 @@ fn svg_to_png(
     // 解析SVG
     let tree = usvg::Tree::from_str(&svg_data, &opt)?;
     
-    // 获取尺寸
+    // 获取原始尺寸
     let orig_size = tree.view_box.rect.size();
     
     // 确定输出尺寸
-    let (width_final, height_final) = if width == 0 && height == 0 {
+    let (width_final, height_final) = if width == 0 || height == 0 {
+        // 如果宽度或高度为0，使用原始SVG的尺寸
         (orig_size.width() as u32, orig_size.height() as u32)
-    } else if width == 0 {
-        let aspect_ratio = orig_size.width() / orig_size.height();
-        ((height as f32 * aspect_ratio) as u32, height)
-    } else if height == 0 {
-        let aspect_ratio = orig_size.height() / orig_size.width();
-        (width, (width as f32 * aspect_ratio) as u32)
     } else {
+        // 否则使用指定的尺寸
         (width, height)
     };
     
@@ -129,6 +123,7 @@ fn svg_to_png(
     }
     
     println!("成功将SVG转换为PNG：{} -> {}", input, output);
+    println!("尺寸: {}x{}", width_final, height_final);
     Ok(())
 }
 
