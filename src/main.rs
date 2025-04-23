@@ -24,22 +24,27 @@ struct Args {
 enum Commands {
     /// 将SVG转换为PNG
     SvgToPng {
-        #[clap(help = "Input svg file path")]
+        /// 输入SVG文件路径
         input: String,
-        #[clap(help = "Output png file path", name = "OUTPUT")]
+        /// 输出PNG文件路径
+        #[clap(value_name = "OUTPUT")]
         output: String,
-        #[clap(help = "Output width (optional, defaults to SVG's original width)", default_value = "0")]
+        /// 输出宽度（可选，默认使用SVG原始宽度）
+        #[clap(default_value = "0")]
         width: u32,
-        #[clap(help = "Output height (optional, defaults to SVG's original height)", default_value = "0")]
+        /// 输出高度（可选，默认使用SVG原始高度）
+        #[clap(default_value = "0")]
         height: u32,
     },
     /// 将PNG转换为SVG
     PngToSvg {
-        #[clap(help = "Input png file path")]
+        /// 输入PNG文件路径
         input: String,
-        #[clap(help = "Output svg file path", name = "OUTPUT")]
+        /// 输出SVG文件路径
+        #[clap(value_name = "OUTPUT")]
         output: String,
-        #[clap(help = "Simplification level (0-10, where 0 is no simplification, 10 is max)", default_value = "3")]
+        /// 简化级别 (0-10, 0表示不简化, 10表示最大简化)
+        #[clap(default_value = "3")]
         simplify: u8,
     },
 }
