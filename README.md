@@ -1,11 +1,129 @@
-# SVG-Converter
+# SVG转换器
 
-一个用Rust编写的SVG和PNG格式转换工具。
+一个用于在SVG和PNG格式之间进行转换的工具。
 
 ## 功能
 
-- 将SVG图像转换为PNG格式
-- 将PNG图像转换为SVG格式（使用边缘检测）
+- SVG转PNG：将SVG文件转换为PNG图像，支持自定义尺寸
+- PNG转SVG：将PNG图像转换为SVG矢量图形，支持简化级别调整
+
+## 命令行工具使用方法
+
+### 构建项目
+
+```bash
+cargo build --release
+```
+
+### SVG转PNG
+
+```bash
+./target/release/svg-converter svg-to-png input.svg output.png [宽度] [高度]
+```
+
+参数：
+- `input.svg`：输入SVG文件路径
+- `output.png`：输出PNG文件路径
+- `[宽度]`：可选，输出PNG的宽度，默认使用SVG的原始宽度
+- `[高度]`：可选，输出PNG的高度，默认使用SVG的原始高度
+
+### PNG转SVG
+
+```bash
+./target/release/svg-converter png-to-svg input.png output.svg [简化级别]
+```
+
+参数：
+- `input.png`：输入PNG文件路径
+- `output.svg`：输出SVG文件路径
+- `[简化级别]`：可选，SVG路径简化级别(0-10)，默认为3
+  - 0: 不简化
+  - 10: 最大简化
+
+## WebAssembly版本
+
+此项目也可以编译为WebAssembly，在浏览器中运行。
+
+### 构建WebAssembly
+
+1. 首先安装wasm-pack：
+
+```bash
+cargo install wasm-pack
+```
+
+2. 构建WebAssembly包：
+
+```bash
+wasm-pack build --target web
+```
+
+这将在`./pkg`目录下生成WebAssembly模块和相应的JavaScript绑定文件。
+
+### 在浏览器中使用
+
+我们提供了一个示例HTML文件，展示如何在浏览器中使用此工具：
+
+1. 查看`examples/index.html`文件中的示例代码
+2. 使用本地服务器运行示例：
+
+```bash
+# 使用Python的简单HTTP服务器
+python -m http.server
+# 或使用Node.js的http-server
+npx http-server
+```
+
+3. 在浏览器中访问`http://localhost:8000/examples/`即可使用SVG/PNG转换工具
+
+### JavaScript API
+
+#### SVG转PNG
+
+```javascript
+import init, { SvgConverter } from './pkg/svg_converter.js';
+
+// 初始化WebAssembly模块
+await init();
+
+// 创建转换器实例
+const converter = new SvgConverter();
+
+// SVG转PNG
+const svgContent = '<svg>...</svg>'; // SVG内容
+const width = 800; // 可选，设置为0使用原始尺寸
+const height = 600; // 可选，设置为0使用原始尺寸
+
+// 返回Base64编码的PNG数据URL
+const pngDataUrl = converter.svg_to_png(svgContent, width, height);
+// 可以直接用于<img>标签的src属性
+```
+
+#### PNG转SVG
+
+```javascript
+import init, { SvgConverter } from './pkg/svg_converter.js';
+
+// 初始化WebAssembly模块
+await init();
+
+// 创建转换器实例
+const converter = new SvgConverter();
+
+// PNG转SVG
+const pngBase64 = 'data:image/png;base64,...'; // PNG的Base64编码数据URL
+const simplifyLevel = 3; // 简化级别 (0-10)
+
+// 返回SVG字符串
+const svgContent = converter.png_to_svg(pngBase64, simplifyLevel);
+```
+
+## 技术细节
+
+- 使用`resvg`库渲染SVG
+- 使用`image`库处理PNG图像
+- 使用自定义边缘检测和轮廓追踪算法将PNG转换为SVG
+- WebAssembly支持通过`wasm-bindgen`实现
 
 ## 安装
 
@@ -16,36 +134,6 @@ git clone https://github.com/yourusername/svg-converter.git
 cd svg-converter
 cargo build --release
 ```
-
-## 使用方法
-
-### SVG转PNG
-
-```bash
-cargo run -- svg-to-png --input input.svg --output output.png [--width <宽度>] [--height <高度>]
-```
-
-参数说明：
-- `--input, -i`: 输入SVG文件路径
-- `--output, -o`: 输出PNG文件路径
-- `--width, -w`: (可选) 输出PNG的宽度
-- `--height, -h`: (可选) 输出PNG的高度
-
-如果不指定宽度和高度，将使用SVG的原始尺寸。如果只指定宽度或高度，将按原始宽高比自动计算另一个维度。
-
-### PNG转SVG
-
-```bash
-cargo run -- png-to-svg --input input.png --output output.svg [--threshold-low <低阈值>] [--threshold-high <高阈值>]
-```
-
-参数说明：
-- `--input, -i`: 输入PNG文件路径
-- `--output, -o`: 输出SVG文件路径
-- `--threshold-low`: (可选) Canny边缘检测的低阈值，默认为50
-- `--threshold-high`: (可选) Canny边缘检测的高阈值，默认为150
-
-阈值参数影响边缘检测的灵敏度。值越低，检测的边缘越多，但可能会包含更多噪点。
 
 ## 示例
 

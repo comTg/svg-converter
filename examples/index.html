@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG/PNG 转换器演示</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        .converter {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+        }
+        .converter h2 {
+            margin-top: 0;
+        }
+        .file-input-container {
+            margin-bottom: 20px;
+        }
+        .image-preview {
+            max-width: 100%;
+            max-height: 300px;
+            margin-top: 20px;
+            border: 1px dashed #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .image-preview img, .image-preview svg {
+            max-width: 100%;
+            max-height: 300px;
+        }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .download-btn {
+            margin-top: 10px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        input[type=range] {
+            width: 200px;
+        }
+    </style>
+</head>
+<body>
+    <h1>SVG/PNG 转换器演示</h1>
+    
+    <div class="container">
+        <div class="converter">
+            <h2>SVG 转 PNG</h2>
+            <div class="file-input-container">
+                <label for="svg-file">选择SVG文件:</label>
+                <input type="file" id="svg-file" accept=".svg">
+            </div>
+            
+            <div class="controls">
+                <div>
+                    <label for="png-width">宽度:</label>
+                    <input type="number" id="png-width" min="0" placeholder="原始宽度">
+                </div>
+                <div>
+                    <label for="png-height">高度:</label>
+                    <input type="number" id="png-height" min="0" placeholder="原始高度">
+                </div>
+            </div>
+            
+            <button id="convert-to-png" disabled>转换为PNG</button>
+            
+            <div class="image-preview" id="svg-preview">
+                <p>SVG预览区域</p>
+            </div>
+            
+            <div class="image-preview" id="png-preview">
+                <p>PNG预览区域</p>
+            </div>
+            
+            <button class="download-btn" id="download-png" disabled>下载PNG</button>
+        </div>
+        
+        <div class="converter">
+            <h2>PNG 转 SVG</h2>
+            <div class="file-input-container">
+                <label for="png-file">选择PNG文件:</label>
+                <input type="file" id="png-file" accept=".png">
+            </div>
+            
+            <div class="controls">
+                <div>
+                    <label for="simplify-level">简化级别:</label>
+                    <input type="range" id="simplify-level" min="0" max="10" value="3">
+                    <span id="simplify-value">3</span>
+                </div>
+            </div>
+            
+            <button id="convert-to-svg" disabled>转换为SVG</button>
+            
+            <div class="image-preview" id="png-orig-preview">
+                <p>PNG预览区域</p>
+            </div>
+            
+            <div class="image-preview" id="svg-result-preview">
+                <p>SVG预览区域</p>
+            </div>
+            
+            <button class="download-btn" id="download-svg" disabled>下载SVG</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // 导入wasm-bindgen初始化函数
+        import init, { SvgConverter } from '../pkg/svg_converter.js';
+
+        // 等待WebAssembly模块初始化
+        init().then(() => {
+            console.log("WebAssembly模块已加载");
+            
+            // 创建转换器实例
+            const converter = new SvgConverter();
+            
+            // SVG到PNG转换
+            const svgFileInput = document.getElementById('svg-file');
+            const pngWidthInput = document.getElementById('png-width');
+            const pngHeightInput = document.getElementById('png-height');
+            const convertToPngBtn = document.getElementById('convert-to-png');
+            const svgPreview = document.getElementById('svg-preview');
+            const pngPreview = document.getElementById('png-preview');
+            const downloadPngBtn = document.getElementById('download-png');
+            
+            let svgContent = null;
+            let pngDataUrl = null;
+            
+            svgFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        svgContent = e.target.result;
+                        svgPreview.innerHTML = svgContent;
+                        convertToPngBtn.disabled = false;
+                    };
+                    reader.readAsText(file);
+                }
+            });
+            
+            convertToPngBtn.addEventListener('click', function() {
+                if (!svgContent) return;
+                
+                try {
+                    // 获取宽度和高度，如果未指定则使用0（原始尺寸）
+                    const width = parseInt(pngWidthInput.value) || 0;
+                    const height = parseInt(pngHeightInput.value) || 0;
+                    
+                    // 调用WebAssembly函数进行转换
+                    pngDataUrl = converter.svg_to_png(svgContent, width, height);
+                    
+                    // 显示结果
+                    pngPreview.innerHTML = `<img src="${pngDataUrl}" alt="Converted PNG">`;
+                    downloadPngBtn.disabled = false;
+                } catch (err) {
+                    console.error("转换失败:", err);
+                    pngPreview.innerHTML = `<p>转换失败: ${err.message}</p>`;
+                }
+            });
+            
+            downloadPngBtn.addEventListener('click', function() {
+                if (pngDataUrl) {
+                    const a = document.createElement('a');
+                    a.href = pngDataUrl;
+                    a.download = 'converted.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+            });
+            
+            // PNG到SVG转换
+            const pngFileInput = document.getElementById('png-file');
+            const simplifyLevelInput = document.getElementById('simplify-level');
+            const simplifyValueSpan = document.getElementById('simplify-value');
+            const convertToSvgBtn = document.getElementById('convert-to-svg');
+            const pngOrigPreview = document.getElementById('png-orig-preview');
+            const svgResultPreview = document.getElementById('svg-result-preview');
+            const downloadSvgBtn = document.getElementById('download-svg');
+            
+            let pngBase64 = null;
+            let svgResult = null;
+            
+            simplifyLevelInput.addEventListener('input', function() {
+                simplifyValueSpan.textContent = this.value;
+            });
+            
+            pngFileInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        pngBase64 = e.target.result;
+                        pngOrigPreview.innerHTML = `<img src="${pngBase64}" alt="Original PNG">`;
+                        convertToSvgBtn.disabled = false;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            convertToSvgBtn.addEventListener('click', function() {
+                if (!pngBase64) return;
+                
+                try {
+                    // 获取简化级别
+                    const simplifyLevel = parseInt(simplifyLevelInput.value);
+                    
+                    // 显示加载状态
+                    svgResultPreview.innerHTML = '<p>处理中，请稍候...</p>';
+                    
+                    // 将操作放入setTimeout中，以便UI可以更新
+                    setTimeout(() => {
+                        try {
+                            // 调用WebAssembly函数进行转换
+                            svgResult = converter.png_to_svg(pngBase64, simplifyLevel);
+                            
+                            // 显示结果
+                            svgResultPreview.innerHTML = svgResult;
+                            downloadSvgBtn.disabled = false;
+                        } catch (err) {
+                            console.error("转换失败:", err);
+                            svgResultPreview.innerHTML = `<p>转换失败: ${err.message}</p>`;
+                        }
+                    }, 100);
+                } catch (err) {
+                    console.error("转换失败:", err);
+                    svgResultPreview.innerHTML = `<p>转换失败: ${err.message}</p>`;
+                }
+            });
+            
+            downloadSvgBtn.addEventListener('click', function() {
+                if (svgResult) {
+                    const blob = new Blob([svgResult], {type: 'image/svg+xml'});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'converted.svg';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            });
+            
+        }).catch(e => {
+            console.error("加载WebAssembly模块失败:", e);
+        });
+    </script>
+</body>
+</html> 
